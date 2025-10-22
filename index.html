@@ -70,6 +70,11 @@
     background: #e0f7fa;
     border-radius: 5px;
   }
+  @media screen and (max-width: 900px){
+    .title h1 {
+      line-height: 60px;
+    }
+  } 
 </style>
 </head>
 <body>
@@ -93,6 +98,9 @@
 
   <label>قیمت منطقه‌ای هر متر مربع جواز (تومان):</label>
   <input type="number" id="regionPrice" placeholder="مثال: 1500000">
+
+  <label>وارد کردن قیمت تمام شده هر متر ساختمان (اختیاری):</label>
+  <input type="number" id="myprice" placeholder="مثال: 16000000">
 
   <button onclick="calculateCost()">محاسبه هزینه</button>
 
@@ -118,42 +126,59 @@ function calculatePermitCost(totalArea, parking, regionPrice) {
 }
 
 function calculateCost() {
-  const parkingarea = parseFloat(document.getElementById('parkingarea').value);  
+  const parkingarea = parseFloat(document.getElementById('parkingarea').value) || 0;  
   const floors = parseFloat(document.getElementById('floors').value);
   const area = parseFloat(document.getElementById('area').value);
   const parking = parseFloat(document.getElementById('parking').value);
   const regionPrice = parseFloat(document.getElementById('regionPrice').value);
+  const myprice = parseFloat(document.getElementById('myprice').value);  
 
   if (isNaN(floors) || isNaN(area) || floors <= 0 || area <= 0 || isNaN(parking) || parking < 0 || isNaN(regionPrice) || regionPrice <= 0) {
     alert('لطفاً همه فیلدها را به درستی وارد کنید.');
     return;
   }
 
-  const totalArea = (floors * area)+parkingarea;
+  const totalArea = (floors * area) + parkingarea;
 
-  // هزینه ساخت (تومان)
-  const minCostPerM2 = 11_000_000;
-  const avgCostPerM2 = 16_000_000;
-  const maxCostPerM2 = 20_000_000;
-
-  const minBuild = totalArea * minCostPerM2;
-  const avgBuild = totalArea * avgCostPerM2;
-  const maxBuild = totalArea * maxCostPerM2;
-
-  // هزینه جواز
+  // هزینه جواز شهرداری
   const permitCost = calculatePermitCost(totalArea, parking, regionPrice);
 
-  const minTotal = minBuild + permitCost;
-  const avgTotal = avgBuild + permitCost;
-  const maxTotal = maxBuild + permitCost;
+  // اگر کاربر قیمت دلخواه هر متر را وارد کرده باشد:
+  if (!isNaN(myprice) && myprice > 0) {
+    const buildCost = totalArea * myprice;
+    const totalCost = buildCost + permitCost;
 
-  document.getElementById('result').innerHTML = `
-    <p>مساحت کل ساختمان: <b>${totalArea} متر مربع</b></p>
-    <p>هزینه جواز شهرداری: <b>${permitCost.toLocaleString()} تومان</b></p>
-    <p>کمترین هزینه کل: <b>${minTotal.toLocaleString()} تومان</b></p>
-    <p>هزینه میانه کل: <b>${avgTotal.toLocaleString()} تومان</b></p>
-    <p>بیشترین هزینه کل: <b>${maxTotal.toLocaleString()} تومان</b></p>
-  `;
+    document.getElementById('result').innerHTML = `
+      <p>مساحت کل ساختمان: <b>${totalArea.toLocaleString()} متر مربع</b></p>
+      <p>قیمت هر متر وارد شده: <b>${myprice.toLocaleString()} تومان</b></p>
+      <p>هزینه ساخت بر اساس قیمت شما: <b>${buildCost.toLocaleString()} تومان</b></p>
+      <p>هزینه جواز شهرداری: <b>${permitCost.toLocaleString()} تومان</b></p>
+      <hr>
+      <p><b>مجموع کل هزینه ساخت + جواز: ${totalCost.toLocaleString()} تومان</b></p>
+    `;
+  } 
+  else {
+    // در غیر این صورت محاسبه سه رنج (حداقل، میانگین، حداکثر)
+    const minCostPerM2 = 11_000_000;
+    const avgCostPerM2 = 16_000_000;
+    const maxCostPerM2 = 20_000_000;
+
+    const minBuild = totalArea * minCostPerM2;
+    const avgBuild = totalArea * avgCostPerM2;
+    const maxBuild = totalArea * maxCostPerM2;
+
+    const minTotal = minBuild + permitCost;
+    const avgTotal = avgBuild + permitCost;
+    const maxTotal = maxBuild + permitCost;
+
+    document.getElementById('result').innerHTML = `
+      <p>مساحت کل ساختمان: <b>${totalArea.toLocaleString()} متر مربع</b></p>
+      <p>هزینه جواز شهرداری: <b>${permitCost.toLocaleString()} تومان</b></p>
+      <p>کمترین هزینه کل: <b>${minTotal.toLocaleString()} تومان</b></p>
+      <p>هزینه میانه کل: <b>${avgTotal.toLocaleString()} تومان</b></p>
+      <p>بیشترین هزینه کل: <b>${maxTotal.toLocaleString()} تومان</b></p>
+    `;
+  }
 }
 </script>
 
